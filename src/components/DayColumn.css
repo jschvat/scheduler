@@ -1,0 +1,28 @@
+.day-column {
+  flex: 1;
+  border-right: 1px solid #e0e0e0;
+  position: relative;
+  min-height: 100%;
+}
+
+.day-column.drop-target {
+  background-color: #f0f8ff;
+}
+
+.day-header {
+  height: 50px;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.day-content {
+  position: relative;
+  height: calc(24 * 60px);
+}
