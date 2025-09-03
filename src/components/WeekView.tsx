@@ -8,13 +8,15 @@ interface WeekViewProps {
   onEventMove: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventResize: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventAdd: (event: SchedulerEvent) => void;
+  onTimeTrackingToggle?: (eventId: string) => void;
 }
 
 const WeekView: React.FC<WeekViewProps> = ({
   events,
   onEventMove,
   onEventResize,
-  onEventAdd
+  onEventAdd,
+  onTimeTrackingToggle
 }) => {
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -49,6 +51,7 @@ const WeekView: React.FC<WeekViewProps> = ({
           onEventMove={onEventMove}
           onEventResize={onEventResize}
           onEventAdd={onEventAdd}
+          onTimeTrackingToggle={onTimeTrackingToggle}
         />
       ))}
     </div>

@@ -27,3 +27,18 @@
   font-size: 1rem;
   opacity: 0.9;
 }
+
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-content .staff-legend {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.app-content .scheduler {
+  flex: 1;
+}

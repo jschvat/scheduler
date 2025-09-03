@@ -10,6 +10,7 @@ interface DayColumnProps {
   onEventMove: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventResize: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventAdd: (event: SchedulerEvent) => void;
+  onTimeTrackingToggle?: (eventId: string) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
@@ -17,7 +18,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
   events,
   onEventMove,
   onEventResize,
-  onEventAdd
+  onEventAdd,
+  onTimeTrackingToggle
 }) => {
 
   const handleTimeSlotClick = useCallback((hour: number) => {
@@ -29,9 +31,10 @@ const DayColumn: React.FC<DayColumnProps> = ({
     
     const newEvent: SchedulerEvent = {
       id: `event-${Date.now()}`,
-      title: 'New Event',
+      title: 'New Task',
       startDate,
       endDate,
+      type: 'shift',
     };
     
     onEventAdd(newEvent);
@@ -60,6 +63,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
             key={event.id}
             event={event}
             onEventResize={onEventResize}
+            onTimeTrackingToggle={onTimeTrackingToggle}
           />
         ))}
       </div>

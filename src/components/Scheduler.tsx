@@ -42,6 +42,32 @@ const Scheduler: React.FC<SchedulerProps> = ({
     onEventChange?.(updatedEvents);
   }, [events, onEventChange]);
 
+  const handleTimeTrackingToggle = useCallback((eventId: string) => {
+    const updatedEvents = events.map(event => {
+      if (event.id === eventId) {
+        if (event.isTracking) {
+          // Stop tracking
+          return {
+            ...event,
+            isTracking: false,
+            actualEndTime: new Date(),
+          };
+        } else {
+          // Start tracking
+          return {
+            ...event,
+            isTracking: true,
+            actualStartTime: new Date(),
+            actualEndTime: undefined,
+          };
+        }
+      }
+      return event;
+    });
+    setEvents(updatedEvents);
+    onEventChange?.(updatedEvents);
+  }, [events, onEventChange]);
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const draggedEvent = events.find(e => e.id === event.active.id);
     setActiveEvent(draggedEvent || null);
@@ -84,6 +110,7 @@ const Scheduler: React.FC<SchedulerProps> = ({
           onEventMove={handleEventMove}
           onEventResize={handleEventResize}
           onEventAdd={handleEventAdd}
+          onTimeTrackingToggle={handleTimeTrackingToggle}
         />
       </div>
       <DragOverlay>
