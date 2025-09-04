@@ -5,6 +5,10 @@ export interface StaffMember {
   role: string;
 }
 
+export interface EventTypeConfig {
+  [key: string]: string;
+}
+
 export interface SchedulerEvent {
   id: string;
   title: string;

@@ -1,25 +1,36 @@
 import React, { useCallback } from 'react';
-import { SchedulerEvent } from '../types/scheduler';
+import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
 import EventBlock from './EventBlock';
 import TimeSlot from './TimeSlot';
-import './DayColumn.css';
 
 interface DayColumnProps {
   date: Date;
   events: SchedulerEvent[];
+  staffMembers?: StaffMember[];
+  eventTypeColors?: EventTypeConfig;
+  defaultEventType?: string;
+  selectedEventId?: string | null;
   onEventMove: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventResize: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventAdd: (event: SchedulerEvent) => void;
+  onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
+  showTimeTracking?: boolean;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
   date,
   events,
+  staffMembers = [],
+  eventTypeColors = {},
+  defaultEventType = 'shift',
+  selectedEventId,
   onEventMove,
   onEventResize,
   onEventAdd,
-  onTimeTrackingToggle
+  onEventSelect,
+  onTimeTrackingToggle,
+  showTimeTracking = false
 }) => {
 
   const handleTimeSlotClick = useCallback((hour: number) => {
@@ -34,11 +45,11 @@ const DayColumn: React.FC<DayColumnProps> = ({
       title: 'New Task',
       startDate,
       endDate,
-      type: 'shift',
+      type: (defaultEventType || 'shift') as 'shift' | 'break' | 'consultation' | 'inventory' | 'training' | 'meeting',
     };
     
     onEventAdd(newEvent);
-  }, [date, onEventAdd]);
+  }, [date, onEventAdd, defaultEventType]);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -62,8 +73,13 @@ const DayColumn: React.FC<DayColumnProps> = ({
           <EventBlock
             key={event.id}
             event={event}
+            staffMembers={staffMembers}
+            eventTypeColors={eventTypeColors}
+            isSelected={selectedEventId === event.id}
             onEventResize={onEventResize}
+            onEventSelect={onEventSelect}
             onTimeTrackingToggle={onTimeTrackingToggle}
+            showTimeTracking={showTimeTracking}
           />
         ))}
       </div>

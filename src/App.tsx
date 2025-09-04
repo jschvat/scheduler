@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Scheduler from './components/Scheduler';
 import StaffLegend from './components/StaffLegend';
 import { SchedulerEvent } from './types/scheduler';
+import { pharmacyStaff, getEventTypeColors } from './data/staff';
 import './App.css';
 
 const getCurrentWeekEvents = () => {
@@ -63,6 +64,10 @@ const getCurrentWeekEvents = () => {
 
 function App() {
   const [events, setEvents] = useState<SchedulerEvent[]>(getCurrentWeekEvents());
+  
+  // Configuration for pharmacy business
+  const staffMembers = pharmacyStaff;
+  const eventTypeColors = getEventTypeColors();
 
   const handleEventChange = (updatedEvents: SchedulerEvent[]) => {
     setEvents(updatedEvents);
@@ -81,9 +86,16 @@ function App() {
       </div>
       
       <div className="app-content">
-        <StaffLegend />
+        <StaffLegend 
+          staffMembers={staffMembers}
+          eventTypeColors={eventTypeColors}
+        />
         <Scheduler 
-          events={events} 
+          events={events}
+          staffMembers={staffMembers}
+          eventTypeColors={eventTypeColors}
+          defaultEventType="shift"
+          showTimeTracking={true}
           onEventChange={handleEventChange}
         />
       </div>

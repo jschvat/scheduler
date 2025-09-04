@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import './TimeSlot.css';
 
 interface TimeSlotProps {
   date: Date;

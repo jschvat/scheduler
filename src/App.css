@@ -1,3 +1,6 @@
+/* ===== DEMO APPLICATION STYLES ===== */
+/* These styles are specific to the test/demo app and should NOT be part of the reusable scheduler component */
+
 .App {
   height: 100vh;
   display: flex;
@@ -9,6 +12,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Demo App Header - Pharmacy specific */
 .app-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -28,6 +32,7 @@
   opacity: 0.9;
 }
 
+/* Demo App Layout - Specific to this pharmacy demo */
 .app-content {
   display: flex;
   flex: 1;

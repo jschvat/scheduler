@@ -1,27 +1,38 @@
 import React, { useState, useCallback } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core';
-import { SchedulerEvent } from '../types/scheduler';
+import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
 import WeekView from './WeekView';
 import './Scheduler.css';
 
 interface SchedulerProps {
   events?: SchedulerEvent[];
+  staffMembers?: StaffMember[];
+  eventTypeColors?: EventTypeConfig;
+  defaultEventType?: string;
+  showTimeTracking?: boolean;
   onEventChange?: (events: SchedulerEvent[]) => void;
 }
 
 const Scheduler: React.FC<SchedulerProps> = ({ 
-  events: initialEvents = [], 
+  events: initialEvents = [],
+  staffMembers = [],
+  eventTypeColors = {},
+  defaultEventType = 'task',
+  showTimeTracking = false,
   onEventChange 
 }) => {
   const [events, setEvents] = useState<SchedulerEvent[]>(initialEvents);
   const [activeEvent, setActiveEvent] = useState<SchedulerEvent | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const handleEventMove = useCallback((eventId: string, newStartDate: Date, newEndDate: Date) => {
+    console.log('handleEventMove called:', { eventId, newStartDate, newEndDate });
     const updatedEvents = events.map(event => 
       event.id === eventId 
         ? { ...event, startDate: newStartDate, endDate: newEndDate }
         : event
     );
+    console.log('Updated events:', updatedEvents);
     setEvents(updatedEvents);
     onEventChange?.(updatedEvents);
   }, [events, onEventChange]);
@@ -95,6 +106,59 @@ const Scheduler: React.FC<SchedulerProps> = ({
     }
   }, [events, handleEventMove]);
 
+  // Keyboard controls for time adjustment
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    console.log('Key pressed:', event.key, 'Selected event:', selectedEventId);
+    
+    if (!selectedEventId) return;
+    
+    const selectedEvent = events.find(e => e.id === selectedEventId);
+    if (!selectedEvent) return;
+
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      
+      const adjustment = event.key === 'ArrowUp' ? -15 : 15; // Up = earlier, Down = later
+      const adjustmentMs = adjustment * 60 * 1000; // Convert to milliseconds
+      
+      const newStartDate = new Date(selectedEvent.startDate.getTime() + adjustmentMs);
+      const newEndDate = new Date(selectedEvent.endDate.getTime() + adjustmentMs);
+      
+      console.log('Adjusting time by', adjustment, 'minutes');
+      console.log('New times:', newStartDate, newEndDate);
+      
+      // Ensure we don't go before midnight or after 23:45
+      const startHours = newStartDate.getHours() + newStartDate.getMinutes() / 60;
+      const endHours = newEndDate.getHours() + newEndDate.getMinutes() / 60;
+      
+      console.log('Time validation:', { startHours, endHours, valid: startHours >= 0 && endHours <= 24 });
+      
+      if (startHours >= 0 && endHours <= 24) {
+        console.log('Moving event to new time');
+        handleEventMove(selectedEventId, newStartDate, newEndDate);
+      } else {
+        console.log('Time adjustment blocked - would go outside valid range');
+      }
+    }
+    
+    if (event.key === 'Escape') {
+      setSelectedEventId(null);
+    }
+  }, [selectedEventId, events, handleEventMove]);
+
+  const handleEventSelect = useCallback((eventId: string) => {
+    console.log('handleEventSelect called - Event selected:', eventId, 'Previously selected:', selectedEventId);
+    const newSelectedId = eventId === selectedEventId ? null : eventId;
+    console.log('Setting selectedEventId to:', newSelectedId);
+    setSelectedEventId(newSelectedId);
+  }, [selectedEventId]);
+
+  // Add keyboard event listeners
+  React.useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
     <DndContext 
       collisionDetection={closestCenter}
@@ -107,10 +171,16 @@ const Scheduler: React.FC<SchedulerProps> = ({
         </div>
         <WeekView
           events={events}
+          staffMembers={staffMembers}
+          eventTypeColors={eventTypeColors}
+          defaultEventType={defaultEventType}
+          selectedEventId={selectedEventId}
           onEventMove={handleEventMove}
           onEventResize={handleEventResize}
           onEventAdd={handleEventAdd}
+          onEventSelect={handleEventSelect}
           onTimeTrackingToggle={handleTimeTrackingToggle}
+          showTimeTracking={showTimeTracking}
         />
       </div>
       <DragOverlay>

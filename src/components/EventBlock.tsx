@@ -1,16 +1,28 @@
 import React, { useState, useCallback } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { SchedulerEvent } from '../types/scheduler';
-import { getStaffById, getEventTypeColors } from '../data/staff';
-import './EventBlock.css';
+import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
 
 interface EventBlockProps {
   event: SchedulerEvent;
+  staffMembers?: StaffMember[];
+  eventTypeColors?: EventTypeConfig;
+  isSelected?: boolean;
   onEventResize: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
+  onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
+  showTimeTracking?: boolean;
 }
 
-const EventBlock: React.FC<EventBlockProps> = ({ event, onEventResize, onTimeTrackingToggle }) => {
+const EventBlock: React.FC<EventBlockProps> = ({ 
+  event, 
+  staffMembers = [], 
+  eventTypeColors = {},
+  isSelected = false,
+  onEventResize,
+  onEventSelect,
+  onTimeTrackingToggle,
+  showTimeTracking = false 
+}) => {
   const [isResizing, setIsResizing] = useState(false);
   
   const {
@@ -21,16 +33,20 @@ const EventBlock: React.FC<EventBlockProps> = ({ event, onEventResize, onTimeTra
     isDragging,
   } = useDraggable({
     id: event.id,
+    disabled: false,
   });
+
+  const getStaff = useCallback(() => {
+    return event.staffId ? staffMembers.find(s => s.id === event.staffId) : null;
+  }, [event.staffId, staffMembers]);
 
   const getEventStyle = useCallback(() => {
     const startHour = event.startDate.getHours() + event.startDate.getMinutes() / 60;
     const endHour = event.endDate.getHours() + event.endDate.getMinutes() / 60;
     const duration = endHour - startHour;
     
-    const staff = event.staffId ? getStaffById(event.staffId) : null;
-    const eventTypeColors = getEventTypeColors();
-    const backgroundColor = staff ? staff.color : eventTypeColors[event.type];
+    const staff = getStaff();
+    const backgroundColor = staff ? staff.color : (eventTypeColors[event.type] || '#6b7280');
     
     return {
       top: `${startHour * 60}px`,
@@ -40,7 +56,7 @@ const EventBlock: React.FC<EventBlockProps> = ({ event, onEventResize, onTimeTra
       backgroundColor,
       borderLeftColor: backgroundColor,
     };
-  }, [event, isDragging, transform]);
+  }, [event, isDragging, transform, getStaff, eventTypeColors]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, direction: 'top' | 'bottom') => {
     e.preventDefault();
@@ -88,27 +104,48 @@ const EventBlock: React.FC<EventBlockProps> = ({ event, onEventResize, onTimeTra
     onTimeTrackingToggle?.(event.id);
   }, [event.id, onTimeTrackingToggle]);
 
-  const staff = event.staffId ? getStaffById(event.staffId) : null;
+  const [mouseDownTime, setMouseDownTime] = useState<number>(0);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    console.log('EventBlock mouseDown for event:', event.id);
+    setMouseDownTime(Date.now());
+  }, [event.id]);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    const clickDuration = Date.now() - mouseDownTime;
+    console.log('EventBlock mouseUp for event:', event.id, 'duration:', clickDuration);
+    
+    // If it was a quick click (not a drag), treat it as selection
+    if (clickDuration < 200) {
+      console.log('Treating as click - calling onEventSelect with:', event.id);
+      e.preventDefault();
+      e.stopPropagation();
+      onEventSelect?.(event.id);
+    }
+  }, [event.id, onEventSelect, mouseDownTime]);
+
+  const staff = getStaff();
   
   return (
     <div
       ref={setNodeRef}
-      className={`event-block ${isResizing ? 'resizing' : ''} ${event.isTracking ? 'tracking' : ''}`}
+      className={`event-block ${isResizing ? 'resizing' : ''} ${event.isTracking ? 'tracking' : ''} ${isSelected ? 'selected' : ''}`}
       style={getEventStyle()}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
     >
       <div
         className="resize-handle resize-handle-top"
         onMouseDown={(e) => handleResizeStart(e, 'top')}
       />
       
-      <div 
-        className="event-content"
-        {...listeners}
-        {...attributes}
-      >
+      {/* Separate draggable handle area */}
+      <div className="drag-handle" {...listeners} {...attributes} />
+      
+      <div className="event-content">
         <div className="event-header">
           <div className="event-title">{event.title}</div>
-          {onTimeTrackingToggle && (
+          {showTimeTracking && onTimeTrackingToggle && (
             <button
               className={`time-tracking-btn ${event.isTracking ? 'active' : ''}`}
               onClick={handleTimeTrackingClick}

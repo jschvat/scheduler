@@ -1,22 +1,33 @@
 import React from 'react';
-import { SchedulerEvent } from '../types/scheduler';
+import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
 import DayColumn from './DayColumn';
-import './WeekView.css';
 
 interface WeekViewProps {
   events: SchedulerEvent[];
+  staffMembers?: StaffMember[];
+  eventTypeColors?: EventTypeConfig;
+  defaultEventType?: string;
+  selectedEventId?: string | null;
   onEventMove: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventResize: (eventId: string, newStartDate: Date, newEndDate: Date) => void;
   onEventAdd: (event: SchedulerEvent) => void;
+  onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
+  showTimeTracking?: boolean;
 }
 
 const WeekView: React.FC<WeekViewProps> = ({
   events,
+  staffMembers,
+  eventTypeColors,
+  defaultEventType,
+  selectedEventId,
   onEventMove,
   onEventResize,
   onEventAdd,
-  onTimeTrackingToggle
+  onEventSelect,
+  onTimeTrackingToggle,
+  showTimeTracking
 }) => {
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -48,10 +59,16 @@ const WeekView: React.FC<WeekViewProps> = ({
             const eventDate = new Date(event.startDate);
             return eventDate.toDateString() === day.toDateString();
           })}
+          staffMembers={staffMembers}
+          eventTypeColors={eventTypeColors}
+          defaultEventType={defaultEventType}
+          selectedEventId={selectedEventId}
           onEventMove={onEventMove}
           onEventResize={onEventResize}
           onEventAdd={onEventAdd}
+          onEventSelect={onEventSelect}
           onTimeTrackingToggle={onTimeTrackingToggle}
+          showTimeTracking={showTimeTracking}
         />
       ))}
     </div>
