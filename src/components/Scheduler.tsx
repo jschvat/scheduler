@@ -153,6 +153,11 @@ const Scheduler: React.FC<SchedulerProps> = ({
     setSelectedEventId(newSelectedId);
   }, [selectedEventId]);
 
+  // Debug selected event changes
+  React.useEffect(() => {
+    console.log('selectedEventId changed to:', selectedEventId);
+  }, [selectedEventId]);
+
   // Add keyboard event listeners
   React.useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

@@ -104,25 +104,18 @@ const EventBlock: React.FC<EventBlockProps> = ({
     onTimeTrackingToggle?.(event.id);
   }, [event.id, onTimeTrackingToggle]);
 
-  const [mouseDownTime, setMouseDownTime] = useState<number>(0);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    console.log('EventBlock mouseDown for event:', event.id);
-    setMouseDownTime(Date.now());
-  }, [event.id]);
-
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
-    const clickDuration = Date.now() - mouseDownTime;
-    console.log('EventBlock mouseUp for event:', event.id, 'duration:', clickDuration);
+  const handleEventClick = useCallback((e: React.MouseEvent) => {
+    // Only handle clicks that don't come from draggable area
+    const target = e.target as HTMLElement;
     
-    // If it was a quick click (not a drag), treat it as selection
-    if (clickDuration < 200) {
-      console.log('Treating as click - calling onEventSelect with:', event.id);
-      e.preventDefault();
-      e.stopPropagation();
-      onEventSelect?.(event.id);
+    // If the click is on a button (like time tracking), don't select
+    if (target.tagName === 'BUTTON') {
+      return;
     }
-  }, [event.id, onEventSelect, mouseDownTime]);
+    
+    console.log('EventBlock clicked for event:', event.id);
+    onEventSelect?.(event.id);
+  }, [event.id, onEventSelect]);
 
   const staff = getStaff();
   
@@ -131,18 +124,25 @@ const EventBlock: React.FC<EventBlockProps> = ({
       ref={setNodeRef}
       className={`event-block ${isResizing ? 'resizing' : ''} ${event.isTracking ? 'tracking' : ''} ${isSelected ? 'selected' : ''}`}
       style={getEventStyle()}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
     >
       <div
         className="resize-handle resize-handle-top"
         onMouseDown={(e) => handleResizeStart(e, 'top')}
       />
       
-      {/* Separate draggable handle area */}
-      <div className="drag-handle" {...listeners} {...attributes} />
+      {/* Draggable area - small handle in top-right */}
+      <div 
+        className="drag-handle"
+        {...listeners}
+        {...attributes}
+        title="Drag to move event"
+      />
       
-      <div className="event-content">
+      {/* Clickable content area */}
+      <div 
+        className="event-content"
+        onClick={handleEventClick}
+      >
         <div className="event-header">
           <div className="event-title">{event.title}</div>
           {showTimeTracking && onTimeTrackingToggle && (
