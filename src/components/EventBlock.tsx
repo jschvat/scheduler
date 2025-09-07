@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
+import ContextMenu, { ContextMenuOption } from './ContextMenu';
 
 interface EventBlockProps {
   event: SchedulerEvent;
@@ -11,6 +12,10 @@ interface EventBlockProps {
   onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
   showTimeTracking?: boolean;
+  onEventEdit?: (eventId: string) => void;
+  onEventDelete?: (eventId: string) => void;
+  onEventSetAsTemplate?: (eventId: string) => void;
+  onEventCopy?: (eventId: string) => void;
 }
 
 const EventBlock: React.FC<EventBlockProps> = ({ 
@@ -21,9 +26,14 @@ const EventBlock: React.FC<EventBlockProps> = ({
   onEventResize,
   onEventSelect,
   onTimeTrackingToggle,
-  showTimeTracking = false 
+  showTimeTracking = false,
+  onEventEdit,
+  onEventDelete,
+  onEventSetAsTemplate,
+  onEventCopy 
 }) => {
   const [isResizing, setIsResizing] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   
   const {
     attributes,
@@ -117,6 +127,50 @@ const EventBlock: React.FC<EventBlockProps> = ({
     onEventSelect?.(event.id);
   }, [event.id, onEventSelect]);
 
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY
+    });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const getContextMenuOptions = useCallback((): ContextMenuOption[] => {
+    return [
+      {
+        label: 'Edit',
+        icon: '✏️',
+        action: () => onEventEdit?.(event.id),
+        disabled: !onEventEdit
+      },
+      {
+        label: 'Copy',
+        icon: '📋',
+        action: () => onEventCopy?.(event.id),
+        disabled: !onEventCopy
+      },
+      {
+        label: 'Set as Template',
+        icon: '📄',
+        action: () => onEventSetAsTemplate?.(event.id),
+        disabled: !onEventSetAsTemplate
+      },
+      {
+        label: 'Delete',
+        icon: '🗑️',
+        action: () => onEventDelete?.(event.id),
+        disabled: !onEventDelete,
+        divider: true
+      }
+    ];
+  }, [event.id, onEventEdit, onEventCopy, onEventSetAsTemplate, onEventDelete]);
+
   const staff = getStaff();
   
   return (
@@ -142,6 +196,7 @@ const EventBlock: React.FC<EventBlockProps> = ({
       <div 
         className="event-content"
         onClick={handleEventClick}
+        onContextMenu={handleContextMenu}
       >
         <div className="event-header">
           <div className="event-title">{event.title}</div>
@@ -178,6 +233,16 @@ const EventBlock: React.FC<EventBlockProps> = ({
         className="resize-handle resize-handle-bottom"
         onMouseDown={(e) => handleResizeStart(e, 'bottom')}
       />
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          options={getContextMenuOptions()}
+          onClose={handleCloseContextMenu}
+        />
+      )}
     </div>
   );
 };

@@ -14,6 +14,10 @@ interface WeekViewProps {
   onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
   showTimeTracking?: boolean;
+  onEventEdit?: (eventId: string) => void;
+  onEventDelete?: (eventId: string) => void;
+  onEventSetAsTemplate?: (eventId: string) => void;
+  onEventCopy?: (eventId: string) => void;
 }
 
 const WeekView: React.FC<WeekViewProps> = ({
@@ -27,7 +31,11 @@ const WeekView: React.FC<WeekViewProps> = ({
   onEventAdd,
   onEventSelect,
   onTimeTrackingToggle,
-  showTimeTracking
+  showTimeTracking,
+  onEventEdit,
+  onEventDelete,
+  onEventSetAsTemplate,
+  onEventCopy
 }) => {
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -69,6 +77,10 @@ const WeekView: React.FC<WeekViewProps> = ({
           onEventSelect={onEventSelect}
           onTimeTrackingToggle={onTimeTrackingToggle}
           showTimeTracking={showTimeTracking}
+          onEventEdit={onEventEdit}
+          onEventDelete={onEventDelete}
+          onEventSetAsTemplate={onEventSetAsTemplate}
+          onEventCopy={onEventCopy}
         />
       ))}
     </div>

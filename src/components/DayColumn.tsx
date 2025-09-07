@@ -16,6 +16,10 @@ interface DayColumnProps {
   onEventSelect?: (eventId: string) => void;
   onTimeTrackingToggle?: (eventId: string) => void;
   showTimeTracking?: boolean;
+  onEventEdit?: (eventId: string) => void;
+  onEventDelete?: (eventId: string) => void;
+  onEventSetAsTemplate?: (eventId: string) => void;
+  onEventCopy?: (eventId: string) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
@@ -30,7 +34,11 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onEventAdd,
   onEventSelect,
   onTimeTrackingToggle,
-  showTimeTracking = false
+  showTimeTracking = false,
+  onEventEdit,
+  onEventDelete,
+  onEventSetAsTemplate,
+  onEventCopy
 }) => {
 
   const handleTimeSlotClick = useCallback((hour: number) => {
@@ -80,6 +88,10 @@ const DayColumn: React.FC<DayColumnProps> = ({
             onEventSelect={onEventSelect}
             onTimeTrackingToggle={onTimeTrackingToggle}
             showTimeTracking={showTimeTracking}
+            onEventEdit={onEventEdit}
+            onEventDelete={onEventDelete}
+            onEventSetAsTemplate={onEventSetAsTemplate}
+            onEventCopy={onEventCopy}
           />
         ))}
       </div>

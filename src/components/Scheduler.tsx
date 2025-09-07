@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core';
 import { SchedulerEvent, StaffMember, EventTypeConfig } from '../types/scheduler';
 import WeekView from './WeekView';
+import EventEditModal from './EventEditModal';
 import './Scheduler.css';
 
 interface SchedulerProps {
@@ -11,6 +12,8 @@ interface SchedulerProps {
   defaultEventType?: string;
   showTimeTracking?: boolean;
   onEventChange?: (events: SchedulerEvent[]) => void;
+  onEventEdit?: (eventId: string) => void;
+  onEventSetAsTemplate?: (eventId: string) => void;
 }
 
 const Scheduler: React.FC<SchedulerProps> = ({ 
@@ -19,11 +22,15 @@ const Scheduler: React.FC<SchedulerProps> = ({
   eventTypeColors = {},
   defaultEventType = 'task',
   showTimeTracking = false,
-  onEventChange 
+  onEventChange,
+  onEventEdit,
+  onEventSetAsTemplate 
 }) => {
   const [events, setEvents] = useState<SchedulerEvent[]>(initialEvents);
   const [activeEvent, setActiveEvent] = useState<SchedulerEvent | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEvent, setEditingEvent] = useState<SchedulerEvent | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleEventMove = useCallback((eventId: string, newStartDate: Date, newEndDate: Date) => {
     console.log('handleEventMove called:', { eventId, newStartDate, newEndDate });
@@ -153,6 +160,59 @@ const Scheduler: React.FC<SchedulerProps> = ({
     setSelectedEventId(newSelectedId);
   }, [selectedEventId]);
 
+  const handleEventDelete = useCallback((eventId: string) => {
+    const updatedEvents = events.filter(event => event.id !== eventId);
+    setEvents(updatedEvents);
+    onEventChange?.(updatedEvents);
+    if (selectedEventId === eventId) {
+      setSelectedEventId(null);
+    }
+  }, [events, onEventChange, selectedEventId]);
+
+  const handleEventCopy = useCallback((eventId: string) => {
+    const eventToCopy = events.find(event => event.id === eventId);
+    if (eventToCopy) {
+      // Create a copy with a new ID and shift it 1 hour later
+      const copiedEvent: SchedulerEvent = {
+        ...eventToCopy,
+        id: `event-${Date.now()}`,
+        title: `${eventToCopy.title} (Copy)`,
+        startDate: new Date(eventToCopy.startDate.getTime() + 60 * 60 * 1000), // +1 hour
+        endDate: new Date(eventToCopy.endDate.getTime() + 60 * 60 * 1000), // +1 hour
+        isTracking: false,
+        actualStartTime: undefined,
+        actualEndTime: undefined
+      };
+      
+      const updatedEvents = [...events, copiedEvent];
+      setEvents(updatedEvents);
+      onEventChange?.(updatedEvents);
+    }
+  }, [events, onEventChange]);
+
+  const handleEventEditInternal = useCallback((eventId: string) => {
+    const eventToEdit = events.find(event => event.id === eventId);
+    if (eventToEdit) {
+      setEditingEvent(eventToEdit);
+      setIsEditModalOpen(true);
+    }
+    // Also call external handler if provided
+    onEventEdit?.(eventId);
+  }, [events, onEventEdit]);
+
+  const handleModalClose = useCallback(() => {
+    setIsEditModalOpen(false);
+    setEditingEvent(null);
+  }, []);
+
+  const handleModalSave = useCallback((updatedEvent: SchedulerEvent) => {
+    const updatedEvents = events.map(event => 
+      event.id === updatedEvent.id ? updatedEvent : event
+    );
+    setEvents(updatedEvents);
+    onEventChange?.(updatedEvents);
+  }, [events, onEventChange]);
+
   // Debug selected event changes
   React.useEffect(() => {
     console.log('selectedEventId changed to:', selectedEventId);
@@ -186,6 +246,10 @@ const Scheduler: React.FC<SchedulerProps> = ({
           onEventSelect={handleEventSelect}
           onTimeTrackingToggle={handleTimeTrackingToggle}
           showTimeTracking={showTimeTracking}
+          onEventEdit={handleEventEditInternal}
+          onEventDelete={handleEventDelete}
+          onEventSetAsTemplate={onEventSetAsTemplate}
+          onEventCopy={handleEventCopy}
         />
       </div>
       <DragOverlay>
@@ -195,6 +259,17 @@ const Scheduler: React.FC<SchedulerProps> = ({
           </div>
         ) : null}
       </DragOverlay>
+
+      {/* Edit Modal */}
+      {editingEvent && (
+        <EventEditModal
+          event={editingEvent}
+          staffMembers={staffMembers}
+          isOpen={isEditModalOpen}
+          onClose={handleModalClose}
+          onSave={handleModalSave}
+        />
+      )}
     </DndContext>
   );
 };
